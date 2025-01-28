@@ -10,6 +10,8 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class DrawingView(context :Context , attrs : AttributeSet) : View(context,attrs){
 
@@ -21,9 +23,25 @@ class DrawingView(context :Context , attrs : AttributeSet) : View(context,attrs)
     private var color = Color.BLACK
     private var canvas : Canvas? = null
     private val mPaths = ArrayList<CustomPath>()
+    private val mUndoPaths = ArrayList<CustomPath>()
+
+
 
     init{
         setUpDrawing()
+    }
+
+    fun onClickUndo(){
+        if(mPaths.size > 0){
+            mUndoPaths.add(mPaths.removeAt(mPaths.size-1))
+            invalidate()
+        }
+    }
+    fun onClickRedo(){
+        if(mUndoPaths.size > 0){
+            mPaths.add(mUndoPaths.removeAt(mUndoPaths.size-1))
+            invalidate()
+        }
     }
 
     private fun setUpDrawing(){
@@ -45,7 +63,9 @@ class DrawingView(context :Context , attrs : AttributeSet) : View(context,attrs)
     //Change Canvas to Canvas? if fails
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawBitmap(mCanvasBitmap!!,0f,0f,mCanvasPaint)
+        mCanvasBitmap?.let {
+            canvas.drawBitmap(it, 0f,   0f, mCanvasPaint)
+        }
 
         for(path in mPaths){
             mDrawPaint?.strokeWidth = path.brushThickness
@@ -59,23 +79,19 @@ class DrawingView(context :Context , attrs : AttributeSet) : View(context,attrs)
         }
     }
 
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        val touchX = event?.x
-        val touchY = event?.y
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val touchX = event.x
+        val touchY = event.y
 
-        when(event?.action){
+        when(event.action){
             MotionEvent.ACTION_DOWN -> {
                 mDrawPath?.color = color
                 mDrawPath?.brushThickness = mBrushSize
                 mDrawPath?.reset()
-                if(touchX != null && touchY != null) {
-                    mDrawPath!!.moveTo(touchX, touchY)
-                }
+                mDrawPath!!.moveTo(touchX, touchY)
             }
             MotionEvent.ACTION_MOVE -> {
-                if(touchX != null && touchY != null) {
-                    mDrawPath!!.lineTo(touchX, touchY)
-                }
+                mDrawPath!!.lineTo(touchX, touchY)
             }
             MotionEvent.ACTION_UP -> {
                     mPaths.add(mDrawPath!!)
@@ -84,6 +100,7 @@ class DrawingView(context :Context , attrs : AttributeSet) : View(context,attrs)
             }
             else -> return false
         }
+        invalidate()
         return true
     }
 
