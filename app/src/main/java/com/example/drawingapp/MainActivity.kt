@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private var drawingView: DrawingView? = null
     private var currentPaintButton: ImageButton? = null
     private var progressDialog: Dialog? = null
+    private var fillMode = false
 
     // Launcher to open the gallery and select an image
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
@@ -82,6 +83,13 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.ib_undo).setOnClickListener { drawingView?.onClickUndo() }
         findViewById<ImageButton>(R.id.ib_redo).setOnClickListener { drawingView?.onClickRedo() }
         findViewById<ImageButton>(R.id.ib_save).setOnClickListener { saveDrawing() }
+        val bucket = findViewById<ImageButton>(R.id.ib_bucket)
+        bucket.setOnClickListener {
+            fillMode = !fillMode
+            drawingView?.setFloodFillMode(fillMode)
+            val color = if(fillMode) Color.BLACK else Color.GRAY
+            bucket.setColorFilter(color)
+        }
 
         applyWindowInsets()
     }
